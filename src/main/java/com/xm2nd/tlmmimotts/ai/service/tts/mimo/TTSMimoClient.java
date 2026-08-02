@@ -29,7 +29,7 @@ import java.util.Base64;
 /**
  * MiMo 语音合成客户端（服务端发起）。
  * <p>
- * 协议：Chat Completions 端点 + {@code api-key} 请求头 + 非流式 WAV 输出；
+ * 协议：Chat Completions 端点 + {@code api-key} 请求头 + 非流式 MP3 输出；
  * 预置音色 → {@code mimo-v2.5-tts} 直接携带 voiceId；克隆音色 → {@code mimo-v2.5-tts-voiceclone}，
  * 仅在服务端从固定目录读取样本并 Base64 编码为 data URI 写入 {@code audio.voice}。
  * 任何失败都走 TLM 失败回调，诊断信息不含 API Key，绝不静默替换为其他音色。
@@ -169,7 +169,8 @@ public class TTSMimoClient implements TTSClient {
         body.add("messages", messages);
 
         JsonObject audio = new JsonObject();
-        audio.addProperty("format", "wav");
+        // MP3 压缩比高，避免长文本合成结果超过 MC 网络包上限（约 2MB）；wav 体积约为其 10 倍
+        audio.addProperty("format", "mp3");
         audio.addProperty("voice", voice);
         body.add("audio", audio);
 
@@ -190,8 +191,8 @@ public class TTSMimoClient implements TTSClient {
             return;
         }
         try {
-            byte[] wav = processResponse(response.statusCode(), response.body(), this.site.secretKey());
-            callback.onSuccess(wav);
+            byte[] audio = processResponse(response.statusCode(), response.body(), this.site.secretKey());
+            callback.onSuccess(audio);
         } catch (MimoResponseException e) {
             callback.onFailure(request, e, ErrorCode.REQUEST_RECEIVED_ERROR);
         }
@@ -199,7 +200,7 @@ public class TTSMimoClient implements TTSClient {
 
     /**
      * 处理 MiMo HTTP 响应：
-     * 2xx → 解析 {@code choices[0].message.audio.data} 并返回解码后的 WAV 字节；
+     * 2xx → 解析 {@code choices[0].message.audio.data} 并返回解码后的音频字节；
      * 其余状态码 → 明确失败。诊断信息经过 API Key 脱敏。
      */
     public static byte[] processResponse(int statusCode, byte[] body, String secretKey)
@@ -209,14 +210,15 @@ public class TTSMimoClient implements TTSClient {
             throw new MimoResponseException(
                     "HTTP Error Code: %d, Response %s".formatted(statusCode, redact(responseText, secretKey)));
         }
-        return parseWavResponse(body);
+        return parseAudioResponse(body);
     }
 
     /**
-     * 解析非流式响应中的 {@code choices[0].message.audio.data}（Base64 编码的 WAV）。
+     * 解析非流式响应中的 {@code choices[0].message.audio.data}（Base64 编码的音频字节，
+     * 格式由请求 {@code audio.format} 决定，当前为 mp3；解析逻辑与格式无关）。
      * 响应字段缺失或 Base64 解码失败均抛出明确异常。
      */
-    public static byte[] parseWavResponse(byte[] body) throws MimoResponseException {
+    public static byte[] parseAudioResponse(byte[] body) throws MimoResponseException {
         JsonObject root;
         try {
             root = JsonParser.parseString(safeUtf8(body)).getAsJsonObject();

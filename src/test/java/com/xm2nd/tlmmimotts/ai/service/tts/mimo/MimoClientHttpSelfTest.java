@@ -74,7 +74,7 @@ public final class MimoClientHttpSelfTest {
 
             checkEquals("mimo-v2.5-tts", body.get("model").getAsString(), "预置音色应使用 mimo-v2.5-tts");
             checkEquals("冰糖", body.getAsJsonObject("audio").get("voice").getAsString(), "voice 应为预置 voiceId");
-            checkEquals("wav", body.getAsJsonObject("audio").get("format").getAsString(), "格式应为 wav");
+            checkEquals("mp3", body.getAsJsonObject("audio").get("format").getAsString(), "格式应为 mp3");
             checkEquals(false, body.get("stream").getAsBoolean(), "应使用非流式");
             JsonObject assistant = body.getAsJsonArray("messages").get(0).getAsJsonObject();
             checkEquals("assistant", assistant.get("role").getAsString(), "文本应放在 assistant 消息");
@@ -269,22 +269,22 @@ public final class MimoClientHttpSelfTest {
     /** 响应解析失败：字段缺失、无效 Base64、非法 JSON；合法 Base64 应成功 */
     private static void testResponseParsingFailures() throws Exception {
         checkThrows(TTSMimoClient.MimoResponseException.class,
-                () -> TTSMimoClient.parseWavResponse("{}".getBytes(StandardCharsets.UTF_8)), "缺少 choices 应失败");
+                () -> TTSMimoClient.parseAudioResponse("{}".getBytes(StandardCharsets.UTF_8)), "缺少 choices 应失败");
         checkThrows(TTSMimoClient.MimoResponseException.class,
-                () -> TTSMimoClient.parseWavResponse("{\"choices\":[]}".getBytes(StandardCharsets.UTF_8)), "空 choices 应失败");
+                () -> TTSMimoClient.parseAudioResponse("{\"choices\":[]}".getBytes(StandardCharsets.UTF_8)), "空 choices 应失败");
         checkThrows(TTSMimoClient.MimoResponseException.class,
-                () -> TTSMimoClient.parseWavResponse("{\"choices\":[{}]}".getBytes(StandardCharsets.UTF_8)), "缺少 message 应失败");
+                () -> TTSMimoClient.parseAudioResponse("{\"choices\":[{}]}".getBytes(StandardCharsets.UTF_8)), "缺少 message 应失败");
         checkThrows(TTSMimoClient.MimoResponseException.class,
-                () -> TTSMimoClient.parseWavResponse("{\"choices\":[{\"message\":{}}]}".getBytes(StandardCharsets.UTF_8)), "缺少 audio 应失败");
+                () -> TTSMimoClient.parseAudioResponse("{\"choices\":[{\"message\":{}}]}".getBytes(StandardCharsets.UTF_8)), "缺少 audio 应失败");
         checkThrows(TTSMimoClient.MimoResponseException.class,
-                () -> TTSMimoClient.parseWavResponse("{\"choices\":[{\"message\":{\"audio\":{}}}]}".getBytes(StandardCharsets.UTF_8)), "缺少 data 应失败");
+                () -> TTSMimoClient.parseAudioResponse("{\"choices\":[{\"message\":{\"audio\":{}}}]}".getBytes(StandardCharsets.UTF_8)), "缺少 data 应失败");
         checkThrows(TTSMimoClient.MimoResponseException.class,
-                () -> TTSMimoClient.parseWavResponse("{\"choices\":[{\"message\":{\"audio\":{\"data\":\"!!!not-base64!!!\"}}}]}"
+                () -> TTSMimoClient.parseAudioResponse("{\"choices\":[{\"message\":{\"audio\":{\"data\":\"!!!not-base64!!!\"}}}]}"
                         .getBytes(StandardCharsets.UTF_8)), "无效 Base64 应失败");
         checkThrows(TTSMimoClient.MimoResponseException.class,
-                () -> TTSMimoClient.parseWavResponse("not json".getBytes(StandardCharsets.UTF_8)), "非法 JSON 应失败");
+                () -> TTSMimoClient.parseAudioResponse("not json".getBytes(StandardCharsets.UTF_8)), "非法 JSON 应失败");
 
-        byte[] parsed = TTSMimoClient.parseWavResponse(
+        byte[] parsed = TTSMimoClient.parseAudioResponse(
                 ("{\"choices\":[{\"message\":{\"audio\":{\"data\":\"" + Base64.getEncoder().encodeToString(FAKE_WAV) + "\"}}}]}")
                         .getBytes(StandardCharsets.UTF_8));
         checkEquals(new String(FAKE_WAV, StandardCharsets.UTF_8), new String(parsed, StandardCharsets.UTF_8),
