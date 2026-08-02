@@ -1,6 +1,7 @@
 package com.xm2nd.tlmmimotts.mixin;
 
 import com.github.tartaricacid.touhoulittlemaid.ai.manager.entity.TTSCallback;
+import com.xm2nd.tlmmimotts.util.ChatTextAccessor;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 

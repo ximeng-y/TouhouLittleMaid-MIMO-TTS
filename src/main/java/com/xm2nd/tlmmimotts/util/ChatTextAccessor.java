@@ -1,4 +1,4 @@
-package com.xm2nd.tlmmimotts.mixin;
+package com.xm2nd.tlmmimotts.util;
 
 /**
  * 由 {@link TTSCallbackMixin} 注入到 TLM {@code TTSCallback} 的访问器：

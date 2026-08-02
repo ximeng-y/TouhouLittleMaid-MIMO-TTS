@@ -12,8 +12,8 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.xm2nd.tlmmimotts.TlmMimoTts;
-import com.xm2nd.tlmmimotts.mixin.ChatTextAccessor;
 import com.xm2nd.tlmmimotts.server.MimoCloneSampleRepository;
+import com.xm2nd.tlmmimotts.util.ChatTextAccessor;
 import com.xm2nd.tlmmimotts.util.MimoTextUtil;
 import org.jetbrains.annotations.Nullable;
 
