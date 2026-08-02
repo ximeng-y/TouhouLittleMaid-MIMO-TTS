@@ -1,5 +1,7 @@
 # TLM MiMo TTS
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 为 [Touhou Little Maid](https://github.com/TartaricAcid/TouhouLittleMaid)（车万女仆）女仆 AI 聊天接入**小米 MiMo 语音合成**（预置音色 + 语音克隆）的 NeoForge 附属 Mod。
 
 ## 功能
@@ -22,7 +24,7 @@
 ## 安装
 
 1. 安装 NeoForge 21.1.x 与 Touhou Little Maid 1.5.3
-2. 将 `tlm-mimo-tts-1.0.0.jar` 放入 `mods/` 目录
+2. 从 [Releases](../../releases) 下载成品 jar，放入 `mods/` 目录
 3. 启动游戏，在女仆 AI 设置中添加 MiMo TTS 站点（URL 与 API Key）
 
 ## 使用
@@ -41,13 +43,6 @@
 3. 可为每个音色填写描述（风格指令），保存至服务端 `mimo-clone/descriptions/` 同名 txt
 4. 在女仆聊天页选择音色即可朗读
 
-## 构建
-
-```bash
-./gradlew build
-# 产物：build/libs/tlm-mimo-tts-1.0.0.jar
-```
-
 ## 许可
 
-MIT
+本项目采用 [MIT](LICENSE) 许可。
