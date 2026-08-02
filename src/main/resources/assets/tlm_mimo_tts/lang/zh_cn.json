@@ -2,7 +2,12 @@
   "ai.touhou_little_maid.chat.site.mimo.name": "MiMo",
   "tlm_mimo_tts.gui.refresh_clone_voices": "刷新克隆音色",
   "tlm_mimo_tts.gui.clone_dir_tooltip": "克隆音色参考音频请放入服务端 config/touhou_little_maid/mimo-clone/ 目录（仅支持 .mp3 / .wav，Base64 后不超过 10MB）",
+  "tlm_mimo_tts.gui.voice_summary": "预置音色 %s 个 · 克隆音色 %s 个",
+  "tlm_mimo_tts.gui.no_clone_voices": "暂无克隆音色：请将 .mp3/.wav 样本放入 config/touhou_little_maid/mimo-clone/ 后点击「刷新克隆音色」",
+  "tlm_mimo_tts.gui.description_input": "音色描述（保存至服务端 mimo-clone/descriptions/ 同名 txt）",
   "tlm_mimo_tts.message.refresh_ok": "MiMo 克隆音色已刷新：共 %s 个",
   "tlm_mimo_tts.message.refresh_failed": "MiMo 克隆音色刷新失败：%s",
+  "tlm_mimo_tts.message.description_saved": "音色描述已保存：%s",
+  "tlm_mimo_tts.message.description_failed": "音色描述保存失败：%s",
   "tlm_mimo_tts.message.tts_failed": "MiMo 语音合成失败：%s"
 }

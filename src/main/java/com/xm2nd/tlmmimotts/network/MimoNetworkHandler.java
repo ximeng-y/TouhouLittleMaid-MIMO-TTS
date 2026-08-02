@@ -14,5 +14,8 @@ public final class MimoNetworkHandler {
     public static void registerPayloads(RegisterPayloadHandlersEvent event) {
         final PayloadRegistrar registrar = event.registrar("1");
         registrar.playToServer(RefreshMimoClonesPacket.TYPE, RefreshMimoClonesPacket.STREAM_CODEC, RefreshMimoClonesPacket::handle);
+        registrar.playToServer(RequestMimoCloneDescriptionsPacket.TYPE, RequestMimoCloneDescriptionsPacket.STREAM_CODEC, RequestMimoCloneDescriptionsPacket::handle);
+        registrar.playToServer(SaveMimoCloneDescriptionPacket.TYPE, SaveMimoCloneDescriptionPacket.STREAM_CODEC, SaveMimoCloneDescriptionPacket::handle);
+        registrar.playToClient(SyncMimoCloneDescriptionsPacket.TYPE, SyncMimoCloneDescriptionsPacket.STREAM_CODEC, SyncMimoCloneDescriptionsPacket::handle);
     }
 }

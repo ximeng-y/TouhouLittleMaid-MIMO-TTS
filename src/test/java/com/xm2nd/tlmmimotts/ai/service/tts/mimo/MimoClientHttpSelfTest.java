@@ -48,6 +48,7 @@ public final class MimoClientHttpSelfTest {
             testPresetRequestPath();
             testCloneRequestPath();
             testCloneMp3Mime();
+            testCloneDescriptionInRequest();
             testMissingAndDeletedSamples();
             testUnknownVoiceId();
             testOversizedSampleViaClient();
@@ -112,6 +113,45 @@ public final class MimoClientHttpSelfTest {
             HttpRequest request = client.buildRequest("x", new TTSConfig("clone:voice.mp3", "zh"));
             String voice = sendAndParse(server, request).getAsJsonObject("audio").get("voice").getAsString();
             check(voice.startsWith("data:audio/mpeg;base64,"), "mp3 样本应使用 audio/mpeg MIME");
+        }
+    }
+
+    /** 克隆音色描述：有描述 → 作为可选的 user 消息传入；无描述 → 仅 assistant 消息 */
+    private static void testCloneDescriptionInRequest() throws Exception {
+        Path repoDir = Files.createTempDirectory("mimo-client-desc");
+        Files.writeString(repoDir.resolve("voice_a.wav"), "sample-data");
+        Path descDir = repoDir.resolve(MimoCloneSampleRepository.DESCRIPTION_DIR_NAME);
+        Files.createDirectories(descDir);
+        Files.writeString(descDir.resolve("voice_a.wav.txt"), "温柔的女声，语速适中");
+        MimoCloneSampleRepository repo = new MimoCloneSampleRepository(repoDir);
+
+        try (MockServer server = MockServer.start(200, okBody(FAKE_WAV))) {
+            TTSMimoClient client = newClient(server, repo);
+
+            // 有描述：messages[0] 为 user（音色描述），messages[1] 为 assistant
+            HttpRequest withDesc = client.buildRequest("你好", new TTSConfig("clone:voice_a.wav", "zh"));
+            JsonObject bodyWithDesc = sendAndParse(server, withDesc);
+            checkEquals(2, bodyWithDesc.getAsJsonArray("messages").size(), "有描述时应为 user + assistant 两条消息");
+            JsonObject userMsg = bodyWithDesc.getAsJsonArray("messages").get(0).getAsJsonObject();
+            checkEquals("user", userMsg.get("role").getAsString(), "第一条消息应为 user");
+            checkEquals("温柔的女声，语速适中", userMsg.get("content").getAsString(), "user 消息内容应为音色描述");
+            checkEquals("assistant",
+                    bodyWithDesc.getAsJsonArray("messages").get(1).getAsJsonObject().get("role").getAsString(),
+                    "第二条消息应为 assistant");
+
+            // 无描述（voice_b 没有同名 txt）：仅 assistant 消息
+            Files.writeString(repoDir.resolve("voice_b.mp3"), "b");
+            HttpRequest withoutDesc = client.buildRequest("hi", new TTSConfig("clone:voice_b.mp3", "en"));
+            JsonObject bodyWithoutDesc = sendAndParse(server, withoutDesc);
+            checkEquals(1, bodyWithoutDesc.getAsJsonArray("messages").size(), "无描述时应仅 assistant 一条消息");
+            checkEquals("assistant",
+                    bodyWithoutDesc.getAsJsonArray("messages").get(0).getAsJsonObject().get("role").getAsString(),
+                    "仅有的消息应为 assistant");
+
+            // 预置音色不受描述影响：仅 assistant 消息
+            HttpRequest preset = client.buildRequest("hi", new TTSConfig("preset:冰糖", "zh"));
+            checkEquals(1, sendAndParse(server, preset).getAsJsonArray("messages").size(),
+                    "预置音色不应携带描述消息");
         }
     }
 

@@ -2,7 +2,12 @@
   "ai.touhou_little_maid.chat.site.mimo.name": "MiMo",
   "tlm_mimo_tts.gui.refresh_clone_voices": "Refresh Clone Voices",
   "tlm_mimo_tts.gui.clone_dir_tooltip": "Put clone reference audio into config/touhou_little_maid/mimo-clone/ on the server (only .mp3 / .wav, Base64 must not exceed 10MB)",
+  "tlm_mimo_tts.gui.voice_summary": "%s preset voices · %s clone voices",
+  "tlm_mimo_tts.gui.no_clone_voices": "No clone voices: put .mp3/.wav samples into config/touhou_little_maid/mimo-clone/ then click \"Refresh Clone Voices\"",
+  "tlm_mimo_tts.gui.description_input": "Voice description (saved to mimo-clone/descriptions/ with the same file name)",
   "tlm_mimo_tts.message.refresh_ok": "MiMo clone voices refreshed: %s total",
   "tlm_mimo_tts.message.refresh_failed": "MiMo clone voice refresh failed: %s",
+  "tlm_mimo_tts.message.description_saved": "Voice description saved: %s",
+  "tlm_mimo_tts.message.description_failed": "Voice description save failed: %s",
   "tlm_mimo_tts.message.tts_failed": "MiMo TTS failed: %s"
 }

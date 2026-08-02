@@ -4,9 +4,11 @@ import com.xm2nd.tlmmimotts.server.MimoCloneSampleRepository;
 import com.xm2nd.tlmmimotts.server.MimoCloneSampleRepository.MimoSampleException;
 
 import java.nio.charset.StandardCharsets;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Map;
 
 import static com.xm2nd.tlmmimotts.selftest.SelftestUtil.check;
 import static com.xm2nd.tlmmimotts.selftest.SelftestUtil.checkEquals;
@@ -32,6 +34,8 @@ public final class CloneRepositorySelfTest {
             testRejectInvalidExtension();
             testOversizedSample();
             testSymlinkRejection();
+            testDescriptionSaveAndRead();
+            testDescriptionRejects();
             System.out.println("[通过] CloneRepositorySelfTest");
         } catch (AssertionError | Exception e) {
             failures++;
@@ -202,6 +206,76 @@ public final class CloneRepositorySelfTest {
         // 读取：明确失败
         checkThrows(MimoSampleException.class, () -> repo.readSample("clone:link.mp3"),
                 "符号链接样本应被拒绝");
+    }
+
+    /** 音色描述：自动建目录、保存/覆盖/读取/清空、readAllDescriptions 与列表一致 */
+    private static void testDescriptionSaveAndRead() throws Exception {
+        Path cloneDir = Files.createTempDirectory("mimo-repo-desc");
+        MimoCloneSampleRepository repo = new MimoCloneSampleRepository(cloneDir);
+        Files.writeString(cloneDir.resolve("voice_a.wav"), "a");
+        Files.writeString(cloneDir.resolve("voice_b.mp3"), "b");
+
+        Path descDir = cloneDir.resolve(MimoCloneSampleRepository.DESCRIPTION_DIR_NAME);
+        check(!Files.exists(descDir), "前置条件：描述目录尚未创建");
+
+        // 保存描述 → 同名 txt 自动创建
+        repo.saveDescription("clone:voice_a.wav", "温柔的女声，语速适中");
+        check(Files.isDirectory(descDir), "保存描述后描述目录应自动创建");
+        check(Files.isRegularFile(descDir.resolve("voice_a.wav.txt")), "应生成与音频同名的 txt");
+        checkEquals("温柔的女声，语速适中",
+                Files.readString(descDir.resolve("voice_a.wav.txt"), StandardCharsets.UTF_8),
+                "txt 内容应与保存一致（UTF-8）");
+        checkEquals("温柔的女声，语速适中", repo.readDescription("clone:voice_a.wav"), "readDescription 应一致");
+
+        // 覆盖保存
+        repo.saveDescription("clone:voice_a.wav", "改为：活泼的少女音");
+        checkEquals("改为：活泼的少女音", repo.readDescription("clone:voice_a.wav"), "覆盖保存应生效");
+
+        // 无描述返回 null
+        checkEquals(null, repo.readDescription("clone:voice_b.mp3"), "无描述应返回 null");
+
+        // readAllDescriptions 只包含有描述的克隆音色
+        Map<String, String> all = repo.readAllDescriptions();
+        checkEquals(1, all.size(), "readAllDescriptions 应只有 1 条");
+        checkEquals("改为：活泼的少女音", all.get("clone:voice_a.wav"), "readAllDescriptions 内容应正确");
+
+        // 清空描述 → 删除 txt
+        repo.saveDescription("clone:voice_a.wav", "");
+        check(!Files.exists(descDir.resolve("voice_a.wav.txt")), "空描述应删除 txt 文件");
+        checkEquals(null, repo.readDescription("clone:voice_a.wav"), "清空后读取应返回 null");
+    }
+
+    /** 音色描述：超长拒绝、非法文件名/路径穿越拒绝 */
+    private static void testDescriptionRejects() throws Exception {
+        Path cloneDir = Files.createTempDirectory("mimo-repo-desc-reject");
+        MimoCloneSampleRepository repo = new MimoCloneSampleRepository(cloneDir);
+
+        // 超长描述
+        String tooLong = "长".repeat(MimoCloneSampleRepository.MAX_DESCRIPTION_CHARS + 1);
+        checkThrows(MimoSampleException.class,
+                () -> repo.saveDescription("clone:a.wav", tooLong), "超长描述应被拒绝");
+
+        // 非法 voiceId
+        checkThrows(MimoSampleException.class,
+                () -> repo.saveDescription("preset:冰糖", "x"), "非克隆音色 ID 应被拒绝");
+        checkThrows(MimoSampleException.class,
+                () -> repo.saveDescription(null, "x"), "null voiceId 应被拒绝");
+
+        // 路径穿越 / 绝对路径 / 子目录 / 非法扩展名
+        checkThrows(MimoSampleException.class,
+                () -> repo.saveDescription("clone:../evil.wav", "x"), "描述保存应拒绝 ../");
+        checkThrows(MimoSampleException.class,
+                () -> repo.saveDescription("clone:C:\\evil.wav", "x"), "描述保存应拒绝绝对路径");
+        checkThrows(MimoSampleException.class,
+                () -> repo.saveDescription("clone:sub/a.wav", "x"), "描述保存应拒绝子目录");
+        checkThrows(MimoSampleException.class,
+                () -> repo.saveDescription("clone:evil.txt", "x"), "描述保存应拒绝非法扩展名");
+        checkThrows(MimoSampleException.class,
+                () -> repo.saveDescription("clone:..\\a.wav", "x"), "描述保存应拒绝反斜杠穿越");
+
+        // 读取同样拒绝
+        checkThrows(MimoSampleException.class,
+                () -> repo.readDescription("clone:../a.wav"), "描述读取应拒绝 ../");
     }
 
     public static void main(String[] args) {

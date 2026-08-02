@@ -11,6 +11,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.xm2nd.tlmmimotts.TlmMimoTts;
 import com.xm2nd.tlmmimotts.server.MimoCloneSampleRepository;
 import org.jetbrains.annotations.Nullable;
 
@@ -71,7 +72,9 @@ public class TTSMimoClient implements TTSClient {
      * 构造 MiMo Chat Completions 请求。
      * <p>
      * 预置音色 → {@link #PRESET_MODEL} + voiceId；
-     * 克隆音色 → {@link #CLONE_MODEL} + 固定目录样本 data URI（仅读取固定目录）。
+     * 克隆音色 → {@link #CLONE_MODEL} + 固定目录样本 data URI（仅读取固定目录），
+     * 且若该音色配置了描述（mimo-clone/descriptions/ 同名 txt），
+     * 描述会作为可选的 user 消息（风格指令/音色描述）随请求传入。
      *
      * @throws MimoCloneSampleRepository.MimoSampleException 本地校验失败（不含 API Key 的诊断）
      * @throws IOException                                   样本读取失败
@@ -79,7 +82,7 @@ public class TTSMimoClient implements TTSClient {
     HttpRequest buildRequest(String message, TTSConfig config)
             throws MimoCloneSampleRepository.MimoSampleException, IOException {
         MimoVoiceRef ref = resolveVoice(config.model());
-        JsonObject body = buildBody(ref.model(), message, ref.voiceValue());
+        JsonObject body = buildBody(ref.model(), message, ref.voiceValue(), ref.description());
 
         HttpRequest.Builder builder = HttpRequest.newBuilder()
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.JSON_UTF_8.toString())
@@ -101,23 +104,43 @@ public class TTSMimoClient implements TTSClient {
             if (presetId.isEmpty()) {
                 throw new MimoCloneSampleRepository.MimoSampleException("预置音色 ID 为空");
             }
-            return new MimoVoiceRef(PRESET_MODEL, presetId);
+            return new MimoVoiceRef(PRESET_MODEL, presetId, null);
         }
         if (MimoVoiceIds.isClone(voiceId)) {
             byte[] sample = this.repository.readSample(voiceId);
             String mime = MimoCloneSampleRepository.isMp3(MimoVoiceIds.cloneFileName(voiceId))
                     ? "audio/mpeg" : "audio/wav";
             String dataUri = "data:%s;base64,%s".formatted(mime, Base64.getEncoder().encodeToString(sample));
-            return new MimoVoiceRef(CLONE_MODEL, dataUri);
+            return new MimoVoiceRef(CLONE_MODEL, dataUri, this.readDescriptionQuietly(voiceId));
         }
         throw new MimoCloneSampleRepository.MimoSampleException("未知的音色 ID: " + voiceId);
     }
 
-    private static JsonObject buildBody(String model, String text, String voice) {
+    /**
+     * 读取克隆音色描述（可选增强）：描述文件缺失视为无描述；
+     * 读取失败仅记录日志，不阻断合成。
+     */
+    private String readDescriptionQuietly(String voiceId) {
+        try {
+            return this.repository.readDescription(voiceId);
+        } catch (Exception e) {
+            TlmMimoTts.LOGGER.warn("MiMo 克隆音色描述读取失败，忽略描述继续合成: {}", voiceId, e);
+            return null;
+        }
+    }
+
+    private static JsonObject buildBody(String model, String text, String voice, String description) {
         JsonObject body = new JsonObject();
         body.addProperty("model", model);
 
         JsonArray messages = new JsonArray();
+        // 克隆音色可携带音色描述（风格指令）作为可选的 user 消息
+        if (description != null && !description.isEmpty()) {
+            JsonObject user = new JsonObject();
+            user.addProperty("role", "user");
+            user.addProperty("content", description);
+            messages.add(user);
+        }
         JsonObject assistant = new JsonObject();
         assistant.addProperty("role", "assistant");
         assistant.addProperty("content", text);
@@ -218,7 +241,7 @@ public class TTSMimoClient implements TTSClient {
         return text;
     }
 
-    private record MimoVoiceRef(String model, String voiceValue) {
+    private record MimoVoiceRef(String model, String voiceValue, String description) {
     }
 
     /** 响应解析失败；诊断信息不含 API Key */
