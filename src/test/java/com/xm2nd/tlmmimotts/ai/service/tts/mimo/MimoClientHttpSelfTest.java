@@ -7,6 +7,7 @@ import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
 import com.xm2nd.tlmmimotts.server.MimoCloneSampleRepository;
 import com.xm2nd.tlmmimotts.server.MimoCloneSampleRepository.MimoSampleException;
+import com.xm2nd.tlmmimotts.util.MimoTextUtil;
 import net.minecraft.resources.ResourceLocation;
 
 import java.io.IOException;
@@ -54,6 +55,7 @@ public final class MimoClientHttpSelfTest {
             testOversizedSampleViaClient();
             testFullRoundTripAndRedaction();
             testResponseParsingFailures();
+            testTtsTextFallback();
             System.out.println("[通过] MimoClientHttpSelfTest");
         } catch (AssertionError | Exception e) {
             failures++;
@@ -389,6 +391,47 @@ public final class MimoClientHttpSelfTest {
         exchange.sendResponseHeaders(status, bytes.length);
         exchange.getResponseBody().write(bytes);
         exchange.close();
+    }
+
+    /**
+     * 朗读文本兜底：中文语音意图（语言设置 zh）下，若 LLM 把朗读文本翻译成英文
+     * （聊天中文、朗读无汉字），改用中文聊天文本朗读；其余情况尊重原输出。
+     */
+    private static void testTtsTextFallback() {
+        // 中文意图 + 聊天中文 + 朗读被翻译成英文 → 用中文聊天文本
+        checkEquals("你好呀，主人",
+                TTSMimoClient.resolveTtsText("Hello master", "你好呀，主人", "zh"),
+                "中文意图下英文朗读文本应改用中文聊天文本");
+        checkEquals("你好呀，主人",
+                TTSMimoClient.resolveTtsText("Hello master", "你好呀，主人", "zh_cn"),
+                "zh_cn 语言码同样触发兜底");
+
+        // 朗读文本本身是中文 → 不替换
+        checkEquals("你好呀，主人",
+                TTSMimoClient.resolveTtsText("你好呀，主人", "你好呀，主人", "zh"),
+                "朗读文本为中文时不应替换");
+
+        // 英文意图（用户显式选择英文朗读）→ 尊重，不替换
+        checkEquals("Hello master",
+                TTSMimoClient.resolveTtsText("Hello master", "你好呀，主人", "en"),
+                "英文意图不应替换朗读文本");
+
+        // 聊天文本本身就是英文（LLM 英文回复）→ 原样朗读
+        checkEquals("Hello master",
+                TTSMimoClient.resolveTtsText("Hello master", "Hello master", "zh"),
+                "聊天文本无中文时不应替换");
+
+        // 语言为空 → 不替换
+        checkEquals("Hello master",
+                TTSMimoClient.resolveTtsText("Hello master", "你好呀，主人", null),
+                "语言为空时不替换");
+
+        // 汉字检测
+        check(MimoTextUtil.containsHan("你好"), "中文应被识别为含汉字");
+        check(!MimoTextUtil.containsHan("Hello world"), "英文不应被识别为含汉字");
+        check(!MimoTextUtil.containsHan(""), "空串不含汉字");
+        check(!MimoTextUtil.containsHan(null), "null 不含汉字");
+        check(MimoTextUtil.containsHan("abc中文def"), "混合文本应识别汉字");
     }
 
     public static void main(String[] args) {

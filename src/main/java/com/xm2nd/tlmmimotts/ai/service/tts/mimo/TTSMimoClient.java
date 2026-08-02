@@ -12,7 +12,9 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.xm2nd.tlmmimotts.TlmMimoTts;
+import com.xm2nd.tlmmimotts.mixin.ChatTextAccessor;
 import com.xm2nd.tlmmimotts.server.MimoCloneSampleRepository;
+import com.xm2nd.tlmmimotts.util.MimoTextUtil;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -56,6 +58,11 @@ public class TTSMimoClient implements TTSClient {
 
     @Override
     public void play(String message, TTSConfig config, TTSCallback callback) {
+        // 中文语音意图兜底：LLM 可能不遵守 TLM 的"朗读文本与聊天文本同语言"要求，
+        // 把朗读文本翻译成了英文；此时改用中文聊天文本朗读
+        if (callback instanceof ChatTextAccessor accessor) {
+            message = resolveTtsText(message, accessor.getChatText(), config.language());
+        }
         HttpRequest request;
         try {
             request = buildRequest(message, config);
@@ -66,6 +73,20 @@ public class TTSMimoClient implements TTSClient {
         }
         httpClient.sendAsync(request, HttpResponse.BodyHandlers.ofByteArray())
                 .whenComplete((response, throwable) -> handleResponse(callback, response, throwable, request));
+    }
+
+    /**
+     * 中文语音意图下的朗读文本兜底：
+     * 语言设置以 zh 开头（简体中文等）且聊天文本为中文、朗读文本无汉字时，
+     * 说明 LLM 把朗读文本翻译成了其他语言，改用中文聊天文本朗读。
+     * 其余情况原样返回（尊重用户选择的语言与 LLM 输出）。
+     */
+    public static String resolveTtsText(String ttsText, String chatText, String language) {
+        if (language != null && language.startsWith("zh")
+                && MimoTextUtil.containsHan(chatText) && !MimoTextUtil.containsHan(ttsText)) {
+            return chatText;
+        }
+        return ttsText;
     }
 
     /**
