@@ -41,10 +41,12 @@ public class TTSMimoFormLayout extends TTSSiteFormLayout {
     private static final int REFRESH_BUTTON_HEIGHT = 20;
     private static final int REFRESH_BUTTON_MARGIN = 6;
     private static final int VOICE_ROW_HEIGHT = 22;
-    private static final int MAX_CLONE_ROWS = 6;
     private static final int FILE_NAME_WIDTH = 88;
     private static final int SAVE_BUTTON_WIDTH = 44;
     private static final int MAX_DESCRIPTION_LENGTH = 500;
+    /** 摘要行与省略提示行的固定占用高度 */
+    private static final int SUMMARY_HEIGHT = 12;
+    private static final int MORE_LINE_HEIGHT = 10;
 
     /** 克隆音色 voiceId → 描述输入框 */
     private final Map<String, EditBox> descriptionBoxes = new LinkedHashMap<>();
@@ -110,7 +112,7 @@ public class TTSMimoFormLayout extends TTSSiteFormLayout {
         Component summary = Component.translatable("tlm_mimo_tts.gui.voice_summary", presets.size(), clones.size())
                 .withStyle(ChatFormatting.GRAY);
         screen.addRenderableWidget(new StringWidget(x, y + used, width, 10, summary, font));
-        used += 12;
+        used += SUMMARY_HEIGHT;
 
         if (clones.isEmpty()) {
             screen.addRenderableWidget(new StringWidget(x, y + used, width, 10,
@@ -118,10 +120,19 @@ public class TTSMimoFormLayout extends TTSSiteFormLayout {
             return used + 10;
         }
 
+        // 底部保存/取消按钮区（TTSSiteEditorScreen 中 bottomY = startY + BASE_HEIGHT - 24，
+        // 且 startY = (窗口高 - 230) / 2，故 bottomY = 窗口高 / 2 + 91）。
+        // 克隆行区域不得越过按钮区（下方留 8px 安全边距），超出部分折叠为省略提示行，
+        // 避免行内容与保存/取消按钮重叠导致按钮无法操作。
+        int bottomY = screen.height / 2 + 91;
+        int available = bottomY - y - 8;
+        // 预留摘要行与省略提示行的高度后，其余空间按行高折算可见行数
+        int shown = Math.min(clones.size(), Math.max(0, (available - SUMMARY_HEIGHT - MORE_LINE_HEIGHT) / VOICE_ROW_HEIGHT));
+        boolean hasMore = clones.size() > shown;
+
         // 已缓存的描述（服务端同步包到达前先展示旧值）
         Map<String, String> cached = MimoCloneDescriptions.getCached(site.id());
         this.descriptionBoxes.clear();
-        int shown = Math.min(clones.size(), MAX_CLONE_ROWS);
         for (int i = 0; i < shown; i++) {
             Map.Entry<String, String> entry = clones.get(i);
             String voiceId = entry.getKey();
@@ -150,10 +161,11 @@ public class TTSMimoFormLayout extends TTSSiteFormLayout {
 
             used += VOICE_ROW_HEIGHT;
         }
-        if (clones.size() > shown) {
+        if (hasMore) {
             screen.addRenderableWidget(new StringWidget(x, y + used, width, 10,
-                    Component.literal("… 等 " + clones.size() + " 个克隆音色").withStyle(ChatFormatting.GRAY), font));
-            used += 10;
+                    Component.translatable("tlm_mimo_tts.gui.clone_voices_more", clones.size() - shown)
+                            .withStyle(ChatFormatting.GRAY), font));
+            used += MORE_LINE_HEIGHT;
         }
         return used;
     }

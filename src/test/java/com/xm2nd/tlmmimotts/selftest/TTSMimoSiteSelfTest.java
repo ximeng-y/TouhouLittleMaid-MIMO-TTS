@@ -45,10 +45,11 @@ public final class TTSMimoSiteSelfTest {
         Path cloneDir = Files.createTempDirectory("mimo-site-repo");
         MimoCloneSampleRepository repo = new MimoCloneSampleRepository(cloneDir);
 
-        // 预置音色 + 一个已失效的旧克隆条目
+        // 预置音色 + 一个已失效的旧克隆条目 + 存量不可控默认音色（模拟修复前保存的配置）
         Map<String, String> models = new LinkedHashMap<>();
         models.putAll(TTSMimoSiteSerializer.defaultPresetVoices());
         models.put("clone:stale.mp3", "stale.mp3");
+        models.put("preset:mimo_default", "MiMo 默认");
 
         TTSMimoSite site = new TTSMimoSite("mimo",
                 ResourceLocation.fromNamespaceAndPath("tlm_mimo_tts", "textures/gui/ai_chat/mimo.png"),
@@ -56,7 +57,7 @@ public final class TTSMimoSiteSelfTest {
                 Map.of(), models);
 
         int presetCount = TTSMimoSiteSerializer.defaultPresetVoices().size();
-        checkEquals(presetCount + 1, site.models().size(), "前置条件：预置 + 1 个旧克隆");
+        checkEquals(presetCount + 2, site.models().size(), "前置条件：预置 + 1 个旧克隆 + 1 个存量默认音色");
 
         // 目录里有两个真实样本
         Files.writeString(cloneDir.resolve("voice_a.wav"), "a");
@@ -68,6 +69,7 @@ public final class TTSMimoSiteSelfTest {
 
         check(site.models().containsKey("preset:冰糖"), "预置音色应保留");
         checkEquals("冰糖（中文女）", site.models().get("preset:冰糖"), "预置音色显示名应保留");
+        check(!site.models().containsKey("preset:mimo_default"), "存量 mimo_default（语言随集群不可控）应被清理");
         check(!site.models().containsKey("clone:stale.mp3"), "失效的旧克隆条目应被清除");
         checkEquals("voice_a.wav", site.models().get("clone:voice_a.wav"), "克隆条目显示名应为完整文件名");
         checkEquals("voice_b.mp3", site.models().get("clone:voice_b.mp3"), "克隆条目显示名应为完整文件名");

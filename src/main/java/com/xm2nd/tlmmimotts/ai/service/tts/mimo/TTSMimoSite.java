@@ -108,12 +108,17 @@ public final class TTSMimoSite implements TTSSite, SupportModelSelect {
 
     /**
      * 重建克隆音色：保留预置音色，删除旧克隆条目，写入固定目录扫描结果（仅文件名元数据）。
+     * <p>
+     * 顺带移除 {@code preset:mimo_default}：该音色输出语言随部署集群而异（非中国集群默认
+     * Mia 英文），与女仆 AI 设置的语言无关，会造成"设置中文却生成英语"；刷新时从
+     * 历史配置中一并清理。
      *
      * @return 当前克隆音色数量
      */
     public int refreshCloneVoices(MimoCloneSampleRepository repository) throws IOException {
         List<MimoCloneSampleRepository.CloneVoice> voices = repository.refresh();
         this.models.entrySet().removeIf(entry -> entry.getKey().startsWith(MimoCloneSampleRepository.CLONE_PREFIX));
+        this.models.remove(MimoVoiceIds.PRESET_PREFIX + "mimo_default");
         for (MimoCloneSampleRepository.CloneVoice voice : voices) {
             this.models.put(voice.voiceId(), voice.displayName());
         }
