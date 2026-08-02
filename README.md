@@ -34,7 +34,7 @@
 女仆 AI 聊天设置 → TTS 站点 → 添加 / 编辑 MiMo 站点：
 
 - **URL**：MiMo Chat Completions 端点地址
-- **API Key**：仅保存在服务端配置文件中，不进入客户端与日志
+- **API Key**：仅保存在服务端配置文件中，不进入客户端与日志；可前往[小米 MiMo 开放平台](https://platform.xiaomimimo.com/)申请
 
 ### 添加克隆音色
 
