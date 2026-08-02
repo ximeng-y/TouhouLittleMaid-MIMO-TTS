@@ -15,6 +15,17 @@ out/
 # 临时文件
 .XMTEMP/
 
+# 构建配置与 Gradle Wrapper（已从仓库移除，仅本地构建使用）
+build.gradle
+gradle.properties
+settings.gradle
+gradlew
+gradlew.bat
+gradle/wrapper/
+
+# AI 协作规范（本地维护，不公开到仓库）
+AGENTS.md
+
 # 历史失败工作产物（勿提交）
 TLM-MiMo-TTS-1.0.0.jar
 TLM-MiMo-TTS-附属Mod开发指南.md
