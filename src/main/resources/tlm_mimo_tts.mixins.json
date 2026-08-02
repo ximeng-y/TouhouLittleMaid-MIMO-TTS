@@ -6,7 +6,7 @@
   "mixins": [
     "TTSCallbackMixin",
     "MaidAIChatManagerMixin",
-    "PapiReplacerMixin"
+    "MaidAIChatDataMixin"
   ],
   "client": [
     "MaidAISoundInstanceMixin",
