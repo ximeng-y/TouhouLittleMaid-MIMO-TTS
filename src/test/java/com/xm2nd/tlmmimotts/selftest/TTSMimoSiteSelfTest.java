@@ -1,8 +1,12 @@
 package com.xm2nd.tlmmimotts.selftest;
 
+import com.google.gson.JsonElement;
+import com.mojang.serialization.JsonOps;
 import com.xm2nd.tlmmimotts.ai.service.tts.mimo.TTSMimoSite;
 import com.xm2nd.tlmmimotts.ai.service.tts.mimo.TTSMimoSiteSerializer;
 import com.xm2nd.tlmmimotts.server.MimoCloneSampleRepository;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtOps;
 import net.minecraft.resources.ResourceLocation;
 
 import java.nio.file.Files;
@@ -26,6 +30,7 @@ public final class TTSMimoSiteSelfTest {
         try {
             testRefreshCloneVoices();
             testNoAudioBytesPersisted();
+            testCodecRoundTrip();
             System.out.println("[通过] TTSMimoSiteSelfTest");
         } catch (AssertionError | Exception e) {
             failures++;
@@ -84,6 +89,39 @@ public final class TTSMimoSiteSelfTest {
             check(id.startsWith("preset:") || id.startsWith("clone:"), "音色 ID 必须带 preset:/clone: 前缀: " + id);
             check(!id.contains("data:") && !id.contains("base64"), "音色 ID 不得包含音频数据: " + id);
             check(!id.contains("/") && !id.contains("\\"), "音色 ID 不得包含路径: " + id);
+        }
+    }
+
+    /** 序列化 round-trip：含克隆条目的站点经 Codec（JSON 与 NBT 双路径）编解码后字段完整 */
+    private static void testCodecRoundTrip() {
+        Map<String, String> models = new LinkedHashMap<>();
+        models.putAll(TTSMimoSiteSerializer.defaultPresetVoices());
+        models.put("clone:voice_a.wav", "voice_a.wav");
+        TTSMimoSite site = new TTSMimoSite("mimo",
+                ResourceLocation.fromNamespaceAndPath("tlm_mimo_tts", "textures/gui/ai_chat/mimo.png"),
+                "https://api.xiaomimimo.com/v1/chat/completions", true, "sk-secret",
+                Map.of("X-Custom", "v"), models);
+
+        // tts.json 读写路径：JsonOps
+        JsonElement json = TTSMimoSiteSerializer.CODEC.encodeStart(JsonOps.INSTANCE, site)
+                .resultOrPartial(System.err::println).orElseThrow();
+        TTSMimoSite fromJson = TTSMimoSiteSerializer.CODEC.decode(JsonOps.INSTANCE, json)
+                .resultOrPartial(System.err::println).orElseThrow().getFirst();
+
+        // 网络同步路径：NbtOps
+        CompoundTag nbt = (CompoundTag) TTSMimoSiteSerializer.CODEC.encodeStart(NbtOps.INSTANCE, site)
+                .resultOrPartial(System.err::println).orElseThrow();
+        TTSMimoSite fromNbt = TTSMimoSiteSerializer.CODEC.parse(NbtOps.INSTANCE, nbt)
+                .resultOrPartial(System.err::println).orElseThrow();
+
+        for (TTSMimoSite decoded : new TTSMimoSite[]{fromJson, fromNbt}) {
+            checkEquals("mimo", decoded.id(), "round-trip id");
+            checkEquals("https://api.xiaomimimo.com/v1/chat/completions", decoded.url(), "round-trip url");
+            checkEquals(true, decoded.enabled(), "round-trip enabled");
+            checkEquals("sk-secret", decoded.secretKey(), "round-trip secretKey");
+            checkEquals("v", decoded.headers().get("X-Custom"), "round-trip headers");
+            checkEquals("冰糖（中文女）", decoded.models().get("preset:冰糖"), "round-trip 预置音色");
+            checkEquals("voice_a.wav", decoded.models().get("clone:voice_a.wav"), "round-trip 克隆音色（仅文件名元数据）");
         }
     }
 
