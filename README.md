@@ -46,3 +46,54 @@
 ## 许可
 
 本项目采用 [MIT](LICENSE) 许可。
+
+---
+
+# TLM MiMo TTS (English)
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
+A NeoForge addon that integrates **Xiaomi MiMo text-to-speech** (preset voices & voice cloning) into the AI chat of [Touhou Little Maid](https://github.com/TartaricAcid/TouhouLittleMaid) maids.
+
+## Features
+
+- **Preset voices**: Built-in MiMo preset voices (e.g. 冰糖), fetched dynamically from the available voices of the model cluster
+- **Voice cloning**: Place reference audio into a fixed server directory to use cloned voices; each clone voice can have a description (style instruction)
+- **Language following**: When a maid has no explicit language setting, the spoken language follows the game language (e.g. Chinese UI → Chinese voice)
+- **MP3 output**: Synthesis results are delivered as MP3, avoiding failures on long texts caused by the Minecraft network packet size limit
+- **Permission safety**: Site configuration, clone voice refresh and description edits are limited to singleplayer / LAN host / OP level 2+; synthesis requests are made server-side and the API key never leaves the server
+
+## Requirements
+
+| Item | Version |
+| --- | --- |
+| Minecraft | 1.21.1 |
+| NeoForge | 21.1.x |
+| Touhou Little Maid | 1.5.3 – 2.0.0 (exclusive) |
+| Java | 21 |
+
+## Installation
+
+1. Install NeoForge 21.1.x and Touhou Little Maid 1.5.3
+2. Download the release jar from [Releases](../../releases) and put it into the `mods/` folder
+3. Launch the game and add a MiMo TTS site in the maid AI settings (URL & API key)
+
+## Usage
+
+### Configure the site
+
+Maid AI chat settings → TTS site → Add / Edit the MiMo site:
+
+- **URL**: MiMo Chat Completions endpoint URL
+- **API Key**: Stored only in the server-side config file, never sent to clients or logs; apply for one on the [Xiaomi MiMo Open Platform](https://platform.xiaomimimo.com/)
+
+### Add clone voices
+
+1. Put reference audio (`.mp3` / `.wav`, no larger than 10MB after Base64) into `config/touhou_little_maid/mimo-clone/` on the server
+2. Click "Refresh Clone Voices" on the site editor page
+3. Optionally fill in a description (style instruction) for each voice; it is saved as a same-name `.txt` under `mimo-clone/descriptions/` on the server
+4. Select the voice on the maid chat page and it will speak
+
+## License
+
+Licensed under the [MIT](LICENSE) license.
