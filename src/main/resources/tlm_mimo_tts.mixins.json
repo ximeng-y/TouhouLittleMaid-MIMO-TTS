@@ -1,0 +1,13 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "com.xm2nd.tlmmimotts.mixin",
+  "compatibilityLevel": "JAVA_17",
+  "mixins": [],
+  "client": [
+    "MaidAISoundInstanceMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

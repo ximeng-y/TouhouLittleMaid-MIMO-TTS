@@ -1,3 +1,24 @@
-.git
+# Gradle
+.gradle/
+build/
+
+# 游戏运行目录与日志
+run/
+logs/
+
+# IDE
+.idea/
+*.iml
+.vscode/
+out/
+
+# 临时文件
 .XMTEMP/
+
+# 历史失败工作产物（勿提交）
+TLM-MiMo-TTS-1.0.0.jar
 TLM-MiMo-TTS-附属Mod开发指南.md
+
+# 系统文件
+Thumbs.db
+.DS_Store
