@@ -1,0 +1,121 @@
+// TLM MiMo TTS 附属 Mod（NeoForge 1.21.1）
+plugins {
+    id 'java-library'
+    id 'idea'
+    id 'net.neoforged.moddev' version '2.0.95'
+}
+
+// 需要 Java 21 版本
+java.toolchain.languageVersion = JavaLanguageVersion.of(21)
+
+version = mod_version
+group = mod_group_id
+
+base {
+    archivesName = 'tlm-mimo-tts'
+}
+
+repositories {
+    maven {
+        name = "Modrinth"
+        url = "https://api.modrinth.com/maven"
+        content {
+            includeGroup "maven.modrinth"
+        }
+    }
+}
+
+neoForge {
+    // NeoForge 版本信息
+    version = project.neo_version
+
+    // 反混淆表
+    parchment {
+        mappingsVersion = project.parchment_mappings_version
+        minecraftVersion = project.parchment_minecraft_version
+    }
+
+    runs {
+        client {
+            client()
+            gameDirectory = project.file('run/client')
+            programArguments = [
+                    "--username", "xm2nd"
+            ]
+            systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
+        }
+
+        server {
+            server()
+            gameDirectory = project.file('run/server')
+            programArgument '--nogui'
+            systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
+        }
+
+        configureEach {
+            jvmArguments = [
+                    '-XX:+IgnoreUnrecognizedVMOptions',
+                    '-XX:+AllowEnhancedClassRedefinition'
+            ]
+            systemProperty 'forge.logging.markers', 'REGISTRIES'
+            logLevel = org.slf4j.event.Level.DEBUG
+        }
+    }
+
+    mods {
+        "${mod_id}" {
+            sourceSet sourceSets.main
+        }
+    }
+}
+
+dependencies {
+    // TLM 1.5.3（1.21.1 NeoForge），仅开发环境使用。
+    // 发布 JAR 不打包 TLM，而是在 neoforge.mods.toml 中声明其为双端必需前置。
+    implementation "maven.modrinth:R0bDWFAW:tXG1TkGx"
+}
+
+// 自检（无第三方测试依赖）：给测试源码集补上 Minecraft/NeoForge 类
+def modDevExtension = extensions.getByType(net.neoforged.moddevgradle.dsl.ModDevExtension)
+modDevExtension.addModdingDependenciesTo(sourceSets.test)
+
+// 用于 neoforge.mods.toml 里替换那一堆 ${xxxx}
+tasks.withType(ProcessResources).configureEach {
+    var replaceProperties = [
+            minecraft_version      : minecraft_version,
+            minecraft_version_range: minecraft_version_range,
+            neo_version            : neo_version,
+            neo_version_range      : neo_version_range,
+            loader_version_range   : loader_version_range,
+            mod_id                 : mod_id,
+            mod_name               : mod_name,
+            mod_license            : mod_license,
+            mod_version            : mod_version,
+            mod_authors            : mod_authors,
+            mod_description        : mod_description
+    ]
+    inputs.properties replaceProperties
+
+    filesMatching(['META-INF/neoforge.mods.toml']) {
+        expand replaceProperties
+    }
+}
+
+// 必须，编码需要显式指定为 UTF
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+}
+
+// 自检：无第三方测试依赖，纯 JDK 标准库（由每个 SelfTest 类的 main 方法驱动）
+tasks.register('selftest', JavaExec) {
+    group = 'verification'
+    description = '运行无第三方依赖的自检测试（文件仓库 / HTTP Mock / WAV 解码）'
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'com.xm2nd.tlmmimotts.selftest.RunAllSelfTests'
+    systemProperty 'file.encoding', 'UTF-8'
+    systemProperty 'stdout.encoding', 'UTF-8'
+}
+
+java {
+    withSourcesJar()
+}

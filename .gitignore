@@ -15,10 +15,7 @@ out/
 # 临时文件
 .XMTEMP/
 
-# 构建配置与 Gradle Wrapper（已从仓库移除，仅本地构建使用）
-build.gradle
-gradle.properties
-settings.gradle
+# Gradle Wrapper（二进制工具，仅本地构建使用，不纳入版本管理）
 gradlew
 gradlew.bat
 gradle/wrapper/
