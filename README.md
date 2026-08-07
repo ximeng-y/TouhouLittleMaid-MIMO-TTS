@@ -53,7 +53,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-A NeoForge addon that integrates **Xiaomi MiMo text-to-speech** (preset voices & voice cloning) into the AI chat of [Touhou Little Maid](https://github.com/TartaricAcid/TouhouLittleMaid) maids.
+A NeoForge mod that integrates **Xiaomi MiMo text-to-speech** (preset voices & voice cloning) into the AI chat of [Touhou Little Maid](https://github.com/TartaricAcid/TouhouLittleMaid) maids.
 
 ## Features
 
@@ -85,13 +85,13 @@ A NeoForge addon that integrates **Xiaomi MiMo text-to-speech** (preset voices &
 Maid AI chat settings → TTS site → Add / Edit the MiMo site:
 
 - **URL**: MiMo Chat Completions endpoint URL
-- **API Key**: Stored only in the server-side config file, never sent to clients or logs; apply for one on the [Xiaomi MiMo Open Platform](https://platform.xiaomimimo.com/)
+- **API Key**: Stored only in the server-side config file, never exposed to clients or logs; apply for one on the [Xiaomi MiMo Open Platform](https://platform.xiaomimimo.com/)
 
 ### Add clone voices
 
 1. Put reference audio (`.mp3` / `.wav`, no larger than 10MB after Base64) into `config/touhou_little_maid/mimo-clone/` on the server
 2. Click "Refresh Clone Voices" on the site editor page
-3. Optionally fill in a description (style instruction) for each voice; it is saved as a same-name `.txt` under `mimo-clone/descriptions/` on the server
+3. Optionally fill in a description (style instruction) for each voice; it is saved as a `.txt` with the same name under `mimo-clone/descriptions/` on the server
 4. Select the voice on the maid chat page and it will speak
 
 ## License
