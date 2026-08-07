@@ -29,6 +29,6 @@ license = "${mod_license}"
 [[dependencies."${mod_id}"]]
     modId = "touhou_little_maid"
     type = "required"
-    versionRange = "[1.5.3,2.0.0)"
+    versionRange = "[1.5.3,)"
     ordering = "NONE"
     side = "BOTH"
