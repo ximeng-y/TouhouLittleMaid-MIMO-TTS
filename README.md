@@ -24,7 +24,9 @@
 ## 安装
 
 1. 安装 NeoForge 21.1.x 与 Touhou Little Maid 1.5.3+
-2. 从 [Releases](../../releases) 下载成品 jar，放入 `mods/` 目录
+2. 下载成品 jar，放入 `mods/` 目录：
+    - CurseForge：https://www.curseforge.com/minecraft/mc-mods/touhoulittlemaid-mimo-tts
+    - Modrinth：审核中
 3. 启动游戏，在女仆 AI 设置中添加 MiMo TTS 站点（URL 与 API Key）
 
 ## 使用
@@ -75,7 +77,9 @@ A NeoForge mod that integrates **Xiaomi MiMo text-to-speech** (preset voices & v
 ## Installation
 
 1. Install NeoForge 21.1.x and Touhou Little Maid 1.5.3+
-2. Download the release jar from [Releases](../../releases) and put it into the `mods/` folder
+2. Download the release jar and put it into the `mods/` folder:
+    - CurseForge: https://www.curseforge.com/minecraft/mc-mods/touhoulittlemaid-mimo-tts
+    - Modrinth: under review
 3. Launch the game and add a MiMo TTS site in the maid AI settings (URL & API key)
 
 ## Usage
