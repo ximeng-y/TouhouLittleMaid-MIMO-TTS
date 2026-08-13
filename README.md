@@ -17,7 +17,7 @@
 | 平台 | Minecraft | 加载器 | Touhou Little Maid | Java |
 | --- | --- | --- | --- | --- |
 | NeoForge（main 分支） | 1.21.1 | NeoForge 21.1.x | 1.5.3+ | 21 |
-| Forge（forge-1.20.1 分支） | 1.20.1 | Forge 47.2.0+ | 1.5.3+ | 17 |
+| Forge（forge-1.20.1 分支） | 1.20.1 | Forge 47.4.10+ | 1.5.3+ | 17 |
 
 ## 安装
 
@@ -68,7 +68,7 @@ A mod that integrates **Xiaomi MiMo text-to-speech** (preset voices & voice clon
 | Platform | Minecraft | Loader | Touhou Little Maid | Java |
 | --- | --- | --- | --- | --- |
 | NeoForge (main branch) | 1.21.1 | NeoForge 21.1.x | 1.5.3+ | 21 |
-| Forge (forge-1.20.1 branch) | 1.20.1 | Forge 47.2.0+ | 1.5.3+ | 17 |
+| Forge (forge-1.20.1 branch) | 1.20.1 | Forge 47.4.10+ | 1.5.3+ | 17 |
 
 ## Installation
 
