@@ -2,7 +2,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-为 [Touhou Little Maid](https://github.com/TartaricAcid/TouhouLittleMaid)（车万女仆）女仆 AI 聊天接入**小米 MiMo 语音合成**（预置音色 + 语音克隆）的附属 Mod（NeoForge 1.21.1 / Forge 1.20.1）。
+为 [Touhou Little Maid](https://github.com/TartaricAcid/TouhouLittleMaid)（车万女仆）女仆 AI 聊天接入**小米 MiMo 语音合成**（预置音色 + 语音克隆）的附属 Mod。
 
 ## 功能
 
@@ -53,7 +53,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-A mod that integrates **Xiaomi MiMo text-to-speech** (preset voices & voice cloning) into the AI chat of [Touhou Little Maid](https://github.com/TartaricAcid/TouhouLittleMaid) maids (NeoForge 1.21.1 / Forge 1.20.1).
+A mod that integrates **Xiaomi MiMo text-to-speech** (preset voices & voice cloning) into the AI chat of [Touhou Little Maid](https://github.com/TartaricAcid/TouhouLittleMaid) maids.
 
 ## Features
 
