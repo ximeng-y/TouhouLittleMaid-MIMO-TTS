@@ -31,7 +31,7 @@ public class TTSMimoSiteSerializer implements SerializableSite<TTSMimoSite> {
     @Override
     public TTSMimoSite defaultSite() {
         return new TTSMimoSite(TTSMimoSite.API_TYPE,
-                ResourceLocation.fromNamespaceAndPath(TlmMimoTts.MOD_ID, "textures/gui/ai_chat/mimo.png"),
+                new ResourceLocation(TlmMimoTts.MOD_ID, "textures/gui/ai_chat/mimo.png"),
                 "https://api.xiaomimimo.com/v1/chat/completions", false, "",
                 Map.of(), defaultPresetVoices());
     }

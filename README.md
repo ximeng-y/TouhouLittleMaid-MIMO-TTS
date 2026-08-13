@@ -2,7 +2,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-为 [Touhou Little Maid](https://github.com/TartaricAcid/TouhouLittleMaid)（车万女仆）女仆 AI 聊天接入**小米 MiMo 语音合成**（预置音色 + 语音克隆）的 NeoForge 附属 Mod。
+为 [Touhou Little Maid](https://github.com/TartaricAcid/TouhouLittleMaid)（车万女仆）女仆 AI 聊天接入**小米 MiMo 语音合成**（预置音色 + 语音克隆）的附属 Mod（NeoForge 1.21.1 / Forge 1.20.1）。
 
 ## 功能
 
@@ -14,16 +14,14 @@
 
 ## 环境要求
 
-| 项目 | 版本 |
-| --- | --- |
-| Minecraft | 1.21.1 |
-| NeoForge | 21.1.x |
-| Touhou Little Maid | 1.5.3+ |
-| Java | 21 |
+| 平台 | Minecraft | 加载器 | Touhou Little Maid | Java |
+| --- | --- | --- | --- | --- |
+| NeoForge（main 分支） | 1.21.1 | NeoForge 21.1.x | 1.5.3+ | 21 |
+| Forge（forge-1.20.1 分支） | 1.20.1 | Forge 47.2.0+ | 1.5.3+ | 17 |
 
 ## 安装
 
-1. 安装 NeoForge 21.1.x 与 Touhou Little Maid 1.5.3+
+1. 按平台安装对应加载器与 Touhou Little Maid 1.5.3+（Forge 版需使用 forge-1.20.1 分支构建的 jar）
 2. 下载成品 jar，放入 `mods/` 目录：
     - CurseForge：https://www.curseforge.com/minecraft/mc-mods/touhoulittlemaid-mimo-tts
     - Modrinth：审核中
@@ -55,7 +53,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-A NeoForge mod that integrates **Xiaomi MiMo text-to-speech** (preset voices & voice cloning) into the AI chat of [Touhou Little Maid](https://github.com/TartaricAcid/TouhouLittleMaid) maids.
+A mod that integrates **Xiaomi MiMo text-to-speech** (preset voices & voice cloning) into the AI chat of [Touhou Little Maid](https://github.com/TartaricAcid/TouhouLittleMaid) maids (NeoForge 1.21.1 / Forge 1.20.1).
 
 ## Features
 
@@ -67,16 +65,14 @@ A NeoForge mod that integrates **Xiaomi MiMo text-to-speech** (preset voices & v
 
 ## Requirements
 
-| Item | Version |
-| --- | --- |
-| Minecraft | 1.21.1 |
-| NeoForge | 21.1.x |
-| Touhou Little Maid | 1.5.3+ |
-| Java | 21 |
+| Platform | Minecraft | Loader | Touhou Little Maid | Java |
+| --- | --- | --- | --- | --- |
+| NeoForge (main branch) | 1.21.1 | NeoForge 21.1.x | 1.5.3+ | 21 |
+| Forge (forge-1.20.1 branch) | 1.20.1 | Forge 47.2.0+ | 1.5.3+ | 17 |
 
 ## Installation
 
-1. Install NeoForge 21.1.x and Touhou Little Maid 1.5.3+
+1. Install the matching loader and Touhou Little Maid 1.5.3+ for your platform (the Forge version requires the jar built from the forge-1.20.1 branch)
 2. Download the release jar and put it into the `mods/` folder:
     - CurseForge: https://www.curseforge.com/minecraft/mc-mods/touhoulittlemaid-mimo-tts
     - Modrinth: under review

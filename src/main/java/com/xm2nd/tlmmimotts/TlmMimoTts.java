@@ -1,8 +1,7 @@
 package com.xm2nd.tlmmimotts;
 
 import com.xm2nd.tlmmimotts.network.MimoNetworkHandler;
-import net.neoforged.bus.api.IEventBus;
-import net.neoforged.fml.common.Mod;
+import net.minecraftforge.fml.common.Mod;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -15,7 +14,9 @@ public class TlmMimoTts {
     public static final String MOD_ID = "tlm_mimo_tts";
     public static final Logger LOGGER = LogManager.getLogger(MOD_ID);
 
-    public TlmMimoTts(IEventBus modEventBus) {
-        modEventBus.addListener(MimoNetworkHandler::registerPayloads);
+    public TlmMimoTts() {
+        // Forge 1.20.1 的 FMLModContainer 仅支持无参构造器；
+        // SimpleChannel 注册不依赖事件时机，构造期直接注册即可
+        MimoNetworkHandler.register();
     }
 }

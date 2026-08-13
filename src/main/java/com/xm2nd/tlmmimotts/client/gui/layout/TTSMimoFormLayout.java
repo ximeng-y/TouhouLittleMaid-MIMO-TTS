@@ -9,6 +9,7 @@ import com.github.tartaricacid.touhoulittlemaid.client.gui.entity.maid.ai.layout
 import com.github.tartaricacid.touhoulittlemaid.client.gui.widget.button.FlatColorButton;
 import com.xm2nd.tlmmimotts.ai.service.tts.mimo.TTSMimoSite;
 import com.xm2nd.tlmmimotts.client.gui.MimoCloneDescriptions;
+import com.xm2nd.tlmmimotts.network.MimoNetworkHandler;
 import com.xm2nd.tlmmimotts.network.RefreshMimoClonesPacket;
 import com.xm2nd.tlmmimotts.network.RequestMimoCloneDescriptionsPacket;
 import com.xm2nd.tlmmimotts.network.SaveMimoCloneDescriptionPacket;
@@ -16,10 +17,13 @@ import com.xm2nd.tlmmimotts.server.MimoCloneSampleRepository;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.EditBox;
-import net.minecraft.client.gui.components.StringWidget;
+import net.minecraft.client.gui.narration.NarratedElementType;
+import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.network.chat.Component;
-import net.neoforged.neoforge.network.PacketDistributor;
+import net.minecraft.network.chat.Style;
 import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.Nullable;
 
@@ -89,7 +93,7 @@ public class TTSMimoFormLayout extends TTSSiteFormLayout {
 
         FlatColorButton refreshButton = new FlatColorButton(x, y, REFRESH_BUTTON_WIDTH, REFRESH_BUTTON_HEIGHT,
                 Component.translatable("tlm_mimo_tts.gui.refresh_clone_voices"),
-                button -> PacketDistributor.sendToServer(new RefreshMimoClonesPacket(this.sourceSite.id())));
+                button -> MimoNetworkHandler.CHANNEL.sendToServer(new RefreshMimoClonesPacket(this.sourceSite.id())));
         refreshButton.setTooltips("tlm_mimo_tts.gui.clone_dir_tooltip");
         screen.addRenderableWidget(refreshButton);
 
@@ -101,7 +105,7 @@ public class TTSMimoFormLayout extends TTSSiteFormLayout {
 
         // 注册为活动编辑页并请求最新描述
         MimoCloneDescriptions.setActiveLayout(this);
-        PacketDistributor.sendToServer(new RequestMimoCloneDescriptionsPacket(this.sourceSite.id()));
+        MimoNetworkHandler.CHANNEL.sendToServer(new RequestMimoCloneDescriptionsPacket(this.sourceSite.id()));
 
         return REFRESH_BUTTON_HEIGHT + REFRESH_BUTTON_MARGIN + listHeight;
     }
@@ -123,7 +127,7 @@ public class TTSMimoFormLayout extends TTSSiteFormLayout {
         prev.active = this.pageIndex > 0;
         screen.addRenderableWidget(prev);
 
-        screen.addRenderableWidget(new StringWidget(pageX + PAGE_BUTTON_WIDTH + 4, y + 5, PAGE_LABEL_WIDTH, 10,
+        screen.addRenderableWidget(new LabelWidget(pageX + PAGE_BUTTON_WIDTH + 4, y + 5, PAGE_LABEL_WIDTH, 10,
                 Component.literal((this.pageIndex + 1) + "/" + this.pageCount), font));
 
         FlatColorButton next = new FlatColorButton(pageX + PAGE_BUTTON_WIDTH + 4 + PAGE_LABEL_WIDTH + 4, y,
@@ -165,11 +169,11 @@ public class TTSMimoFormLayout extends TTSSiteFormLayout {
         // 摘要行：预置与克隆数量
         Component summary = Component.translatable("tlm_mimo_tts.gui.voice_summary", presets.size(), clones.size())
                 .withStyle(ChatFormatting.GRAY);
-        screen.addRenderableWidget(new StringWidget(x, y + used, width, 10, summary, font));
+        screen.addRenderableWidget(new LabelWidget(x, y + used, width, 10, summary, font));
         used += SUMMARY_HEIGHT;
 
         if (clones.isEmpty()) {
-            screen.addRenderableWidget(new StringWidget(x, y + used, width, 10,
+            screen.addRenderableWidget(new LabelWidget(x, y + used, width, 10,
                     Component.translatable("tlm_mimo_tts.gui.no_clone_voices").withStyle(ChatFormatting.GRAY), font));
             return used + 10;
         }
@@ -197,7 +201,7 @@ public class TTSMimoFormLayout extends TTSSiteFormLayout {
             String fileName = entry.getValue();
 
             // 文件名（只读）
-            screen.addRenderableWidget(new StringWidget(x, y + used + 2, FILE_NAME_WIDTH, 10,
+            screen.addRenderableWidget(new LabelWidget(x, y + used + 2, FILE_NAME_WIDTH, 10,
                     Component.literal(fileName), font));
 
             // 描述输入框
@@ -228,7 +232,7 @@ public class TTSMimoFormLayout extends TTSSiteFormLayout {
         if (box == null) {
             return;
         }
-        PacketDistributor.sendToServer(
+        MimoNetworkHandler.CHANNEL.sendToServer(
                 new SaveMimoCloneDescriptionPacket(this.sourceSite.id(), voiceId, box.getValue()));
     }
 
@@ -262,5 +266,33 @@ public class TTSMimoFormLayout extends TTSSiteFormLayout {
         }
         // 保留原音色列表（预置音色 + 服务端管理的克隆音色元数据），不做行级编辑
         return new TTSMimoSite(site.id(), site.icon(), url, site.enabled(), secretKey, site.headers(), site.models());
+    }
+
+    /**
+     * 静态文本组件（1.20.1 无 {@code StringWidget}，该类 1.20.2 才加入 MC，
+     * 故用自绘组件替代），按文本自带样式颜色渲染。
+     */
+    private static class LabelWidget extends AbstractWidget {
+        private final Font font;
+
+        LabelWidget(int x, int y, int width, int height, Component message, Font font) {
+            super(x, y, width, height, message);
+            this.font = font;
+        }
+
+        @Override
+        public void renderWidget(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+            guiGraphics.drawString(this.font, this.getMessage(), this.getX(), this.getY(), textColor());
+        }
+
+        @Override
+        public void updateWidgetNarration(NarrationElementOutput narrationElementOutput) {
+            narrationElementOutput.add(NarratedElementType.TITLE, this.getMessage());
+        }
+
+        private int textColor() {
+            Style style = this.getMessage().getStyle();
+            return style.getColor() != null ? style.getColor().getValue() : 0xFFFFFFFF;
+        }
     }
 }

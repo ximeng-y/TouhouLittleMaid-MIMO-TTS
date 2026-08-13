@@ -15,6 +15,9 @@ out/
 # 临时文件
 .XMTEMP/
 
+# ZCode 会话计划目录（本地维护，不纳入版本管理）
+.zcode/
+
 # Gradle Wrapper（二进制工具，仅本地构建使用，不纳入版本管理）
 gradlew
 gradlew.bat

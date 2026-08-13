@@ -3,22 +3,20 @@ package com.xm2nd.tlmmimotts.network;
 import com.github.tartaricacid.touhoulittlemaid.ai.manager.site.AvailableSites;
 import com.github.tartaricacid.touhoulittlemaid.ai.service.tts.TTSSite;
 import com.github.tartaricacid.touhoulittlemaid.network.NetworkHandler;
-import com.github.tartaricacid.touhoulittlemaid.network.message.ai.SyncAISitesPacket;
+import com.github.tartaricacid.touhoulittlemaid.network.message.ai.SyncAISitesMessage;
 import com.github.tartaricacid.touhoulittlemaid.util.GameModeUtil;
 import com.xm2nd.tlmmimotts.TlmMimoTts;
 import com.xm2nd.tlmmimotts.ai.service.tts.mimo.TTSMimoSite;
 import com.xm2nd.tlmmimotts.server.MimoCloneSampleRepository;
-import io.netty.buffer.ByteBuf;
 import net.minecraft.ChatFormatting;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.codec.ByteBufCodecs;
-import net.minecraft.network.codec.StreamCodec;
-import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
-import net.neoforged.neoforge.network.handling.IPayloadContext;
+import net.minecraftforge.network.NetworkEvent;
 import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.function.Supplier;
 
 /**
  * 客户端 → 服务端「刷新克隆音色」请求，仅传递站点 ID。
@@ -27,24 +25,29 @@ import org.jetbrains.annotations.Nullable;
  * 写回 tts.json 的音色文件名元数据，最后复用 TLM 站点同步结果刷新当前 UI。
  * 客户端永远不会上传、下载或读取参考音频。
  */
-public record RefreshMimoClonesPacket(String siteId) implements CustomPacketPayload {
-    public static final CustomPacketPayload.Type<RefreshMimoClonesPacket> TYPE =
-            new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(TlmMimoTts.MOD_ID, "refresh_mimo_clones"));
-    public static final StreamCodec<ByteBuf, RefreshMimoClonesPacket> STREAM_CODEC = StreamCodec.composite(
-            ByteBufCodecs.STRING_UTF8,
-            RefreshMimoClonesPacket::siteId,
-            RefreshMimoClonesPacket::new
-    );
+public class RefreshMimoClonesPacket {
+    private final String siteId;
 
-    @Override
-    public CustomPacketPayload.Type<? extends CustomPacketPayload> type() {
-        return TYPE;
+    public RefreshMimoClonesPacket(String siteId) {
+        this.siteId = siteId;
     }
 
-    public static void handle(RefreshMimoClonesPacket message, IPayloadContext context) {
-        if (context.flow().isServerbound()) {
-            context.enqueueWork(() -> onHandle(message, (ServerPlayer) context.player()));
-        }
+    public String siteId() {
+        return siteId;
+    }
+
+    public static void encode(RefreshMimoClonesPacket message, FriendlyByteBuf buf) {
+        buf.writeUtf(message.siteId());
+    }
+
+    public static RefreshMimoClonesPacket decode(FriendlyByteBuf buf) {
+        return new RefreshMimoClonesPacket(buf.readUtf());
+    }
+
+    public static void handle(RefreshMimoClonesPacket message, Supplier<NetworkEvent.Context> contextSupplier) {
+        NetworkEvent.Context context = contextSupplier.get();
+        context.enqueueWork(() -> onHandle(message, context.getSender()));
+        context.setPacketHandled(true);
     }
 
     private static void onHandle(RefreshMimoClonesPacket message, @Nullable ServerPlayer player) {
@@ -65,7 +68,7 @@ public record RefreshMimoClonesPacket(String siteId) implements CustomPacketPayl
             AvailableSites.saveSites();
             // 复用 TLM 站点同步结果刷新当前 UI
             NetworkHandler.sendToClientPlayer(
-                    new SyncAISitesPacket(AvailableSites.LLM_SITES, AvailableSites.TTS_SITES, false), player);
+                    new SyncAISitesMessage(AvailableSites.LLM_SITES, AvailableSites.TTS_SITES, false), player);
             if (player != null) {
                 player.sendSystemMessage(Component.translatable("tlm_mimo_tts.message.refresh_ok", count));
             }

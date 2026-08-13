@@ -1,7 +1,7 @@
 package com.xm2nd.tlmmimotts.server;
 
 import com.github.tartaricacid.touhoulittlemaid.TouhouLittleMaid;
-import net.neoforged.fml.loading.FMLPaths;
+import net.minecraftforge.fml.loading.FMLPaths;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;

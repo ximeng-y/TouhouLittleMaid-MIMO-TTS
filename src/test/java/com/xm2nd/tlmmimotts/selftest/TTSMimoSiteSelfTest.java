@@ -52,7 +52,7 @@ public final class TTSMimoSiteSelfTest {
         models.put("preset:mimo_default", "MiMo 默认");
 
         TTSMimoSite site = new TTSMimoSite("mimo",
-                ResourceLocation.fromNamespaceAndPath("tlm_mimo_tts", "textures/gui/ai_chat/mimo.png"),
+                new ResourceLocation("tlm_mimo_tts", "textures/gui/ai_chat/mimo.png"),
                 "https://api.xiaomimimo.com/v1/chat/completions", true, "sk-x",
                 Map.of(), models);
 
@@ -82,7 +82,7 @@ public final class TTSMimoSiteSelfTest {
         MimoCloneSampleRepository repo = new MimoCloneSampleRepository(cloneDir);
 
         TTSMimoSite site = new TTSMimoSite("mimo",
-                ResourceLocation.fromNamespaceAndPath("tlm_mimo_tts", "textures/gui/ai_chat/mimo.png"),
+                new ResourceLocation("tlm_mimo_tts", "textures/gui/ai_chat/mimo.png"),
                 "https://api.xiaomimimo.com/v1/chat/completions", true, "sk-x",
                 Map.of(), TTSMimoSiteSerializer.defaultPresetVoices());
         site.refreshCloneVoices(repo);
@@ -100,7 +100,7 @@ public final class TTSMimoSiteSelfTest {
         models.putAll(TTSMimoSiteSerializer.defaultPresetVoices());
         models.put("clone:voice_a.wav", "voice_a.wav");
         TTSMimoSite site = new TTSMimoSite("mimo",
-                ResourceLocation.fromNamespaceAndPath("tlm_mimo_tts", "textures/gui/ai_chat/mimo.png"),
+                new ResourceLocation("tlm_mimo_tts", "textures/gui/ai_chat/mimo.png"),
                 "https://api.xiaomimimo.com/v1/chat/completions", true, "sk-secret",
                 Map.of("X-Custom", "v"), models);
 

@@ -300,7 +300,7 @@ public final class MimoClientHttpSelfTest {
 
     private static TTSMimoSite newSite(int port) {
         return new TTSMimoSite("mimo",
-                ResourceLocation.fromNamespaceAndPath("tlm_mimo_tts", "textures/gui/ai_chat/mimo.png"),
+                new ResourceLocation("tlm_mimo_tts", "textures/gui/ai_chat/mimo.png"),
                 "http://127.0.0.1:" + port + "/v1/chat/completions", true, API_KEY,
                 Map.of("X-Custom-Header", "custom-value"),
                 TTSMimoSiteSerializer.defaultPresetVoices());

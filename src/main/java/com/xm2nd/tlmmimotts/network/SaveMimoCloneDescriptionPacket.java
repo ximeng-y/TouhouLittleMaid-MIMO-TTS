@@ -7,47 +7,59 @@ import com.github.tartaricacid.touhoulittlemaid.util.GameModeUtil;
 import com.xm2nd.tlmmimotts.TlmMimoTts;
 import com.xm2nd.tlmmimotts.ai.service.tts.mimo.TTSMimoSite;
 import com.xm2nd.tlmmimotts.server.MimoCloneSampleRepository;
-import io.netty.buffer.ByteBuf;
 import net.minecraft.ChatFormatting;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.codec.ByteBufCodecs;
-import net.minecraft.network.codec.StreamCodec;
-import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
-import net.neoforged.neoforge.network.handling.IPayloadContext;
+import net.minecraftforge.network.NetworkEvent;
 import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
+import java.util.function.Supplier;
 
 /**
  * 客户端 → 服务端：保存某个克隆音色的描述。
  * 服务端复用 TLM 站点编辑权限校验，写入固定根目录下描述文件夹中的同名 txt，
  * 然后回发 {@link SyncMimoCloneDescriptionsPacket} 刷新客户端缓存。
  */
-public record SaveMimoCloneDescriptionPacket(String siteId, String voiceId, String description) implements CustomPacketPayload {
-    public static final CustomPacketPayload.Type<SaveMimoCloneDescriptionPacket> TYPE =
-            new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(TlmMimoTts.MOD_ID, "save_mimo_clone_description"));
-    public static final StreamCodec<ByteBuf, SaveMimoCloneDescriptionPacket> STREAM_CODEC = StreamCodec.composite(
-            ByteBufCodecs.STRING_UTF8,
-            SaveMimoCloneDescriptionPacket::siteId,
-            ByteBufCodecs.STRING_UTF8,
-            SaveMimoCloneDescriptionPacket::voiceId,
-            ByteBufCodecs.STRING_UTF8,
-            SaveMimoCloneDescriptionPacket::description,
-            SaveMimoCloneDescriptionPacket::new
-    );
+public class SaveMimoCloneDescriptionPacket {
+    private final String siteId;
+    private final String voiceId;
+    private final String description;
 
-    @Override
-    public CustomPacketPayload.Type<? extends CustomPacketPayload> type() {
-        return TYPE;
+    public SaveMimoCloneDescriptionPacket(String siteId, String voiceId, String description) {
+        this.siteId = siteId;
+        this.voiceId = voiceId;
+        this.description = description;
     }
 
-    public static void handle(SaveMimoCloneDescriptionPacket message, IPayloadContext context) {
-        if (context.flow().isServerbound()) {
-            context.enqueueWork(() -> onHandle(message, (ServerPlayer) context.player()));
-        }
+    public String siteId() {
+        return siteId;
+    }
+
+    public String voiceId() {
+        return voiceId;
+    }
+
+    public String description() {
+        return description;
+    }
+
+    public static void encode(SaveMimoCloneDescriptionPacket message, FriendlyByteBuf buf) {
+        buf.writeUtf(message.siteId());
+        buf.writeUtf(message.voiceId());
+        buf.writeUtf(message.description());
+    }
+
+    public static SaveMimoCloneDescriptionPacket decode(FriendlyByteBuf buf) {
+        return new SaveMimoCloneDescriptionPacket(buf.readUtf(), buf.readUtf(), buf.readUtf());
+    }
+
+    public static void handle(SaveMimoCloneDescriptionPacket message, Supplier<NetworkEvent.Context> contextSupplier) {
+        NetworkEvent.Context context = contextSupplier.get();
+        context.enqueueWork(() -> onHandle(message, context.getSender()));
+        context.setPacketHandled(true);
     }
 
     private static void onHandle(SaveMimoCloneDescriptionPacket message, @Nullable ServerPlayer player) {

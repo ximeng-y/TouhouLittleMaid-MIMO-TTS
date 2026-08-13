@@ -2,7 +2,7 @@ package com.xm2nd.tlmmimotts.mixin;
 
 import com.github.tartaricacid.touhoulittlemaid.ai.manager.entity.MaidAIChatData;
 import com.xm2nd.tlmmimotts.ai.service.tts.mimo.MimoLanguageBridge;
-import net.neoforged.neoforge.common.ModConfigSpec;
+import net.minecraftforge.common.ForgeConfigSpec;
 import org.apache.commons.lang3.StringUtils;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -19,15 +19,17 @@ import org.spongepowered.asm.mixin.injection.Redirect;
  * 语言时走原分支，尊重用户选择。
  * <p>
  * 注入点为普通方法 {@code getTTSLanguage()} 内的唯一全局回退调用
- * （字节码：{@code ModConfigSpec$ConfigValue.get()Ljava/lang/Object;}），
+ * （字节码：{@code ForgeConfigSpec$ConfigValue.get()Ljava/lang/Object;}），
  * 不依赖编译器生成的 lambda 方法名，也不 @Shadow 任何字段。
+ * <p>
+ * 对 TLM（Mojang 映射 mod）的方法注入一律 remap = false。
  */
-@Mixin(MaidAIChatData.class)
+@Mixin(value = MaidAIChatData.class, remap = false)
 public abstract class MaidAIChatDataMixin {
-    @Redirect(method = "getTTSLanguage",
+    @Redirect(method = "getTTSLanguage", remap = false,
             at = @At(value = "INVOKE",
-                    target = "Lnet/neoforged/neoforge/common/ModConfigSpec$ConfigValue;get()Ljava/lang/Object;"))
-    private Object tlmMimoTts$useChatLanguageAsGlobalTtsLanguage(ModConfigSpec.ConfigValue<?> configValue) {
+                    target = "Lnet/minecraftforge/common/ForgeConfigSpec$ConfigValue;get()Ljava/lang/Object;"))
+    private Object tlmMimoTts$useChatLanguageAsGlobalTtsLanguage(ForgeConfigSpec.ConfigValue<?> configValue) {
         // 女仆未显式设置 TTS 语言（走全局回退分支）时，跟随最近一次聊天的游戏语言
         String chatLanguage = MimoLanguageBridge.get();
         if (StringUtils.isNotBlank(chatLanguage)) {

@@ -20,14 +20,16 @@ import java.util.concurrent.CompletableFuture;
  * 客户端专用 Mixin：拦截 TLM {@link MaidAISoundInstance#getStream}。
  * <p>
  * 识别到 RIFF/WAVE 时返回新的 WAV 音频流，其余格式完全交由 TLM 原逻辑处理。
+ * <p>
+ * 对 TLM（Mojang 映射 mod）的方法注入一律 remap = false。
  */
-@Mixin(MaidAISoundInstance.class)
+@Mixin(value = MaidAISoundInstance.class, remap = false)
 public abstract class MaidAISoundInstanceMixin {
-    @Shadow
+    @Shadow(remap = false)
     @Final
     private byte[] data;
 
-    @Inject(method = "getStream", at = @At("HEAD"), cancellable = true)
+    @Inject(method = "getStream", at = @At("HEAD"), cancellable = true, remap = false)
     private void tlm_mimo_tts$handleWave(SoundBufferLibrary library, Sound sound, boolean looping,
                                          CallbackInfoReturnable<CompletableFuture<AudioStream>> cir) {
         if (WavAudioStream.isWave(this.data)) {

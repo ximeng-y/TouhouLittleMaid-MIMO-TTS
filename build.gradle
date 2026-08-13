@@ -1,18 +1,57 @@
-// TLM MiMo TTS 附属 Mod（NeoForge 1.21.1）
-plugins {
-    id 'java-library'
-    id 'idea'
-    id 'net.neoforged.moddev' version '2.0.95'
+// TLM MiMo TTS 附属 Mod（Forge 1.20.1）
+// 本文件为 forge-1.20.1 分支专用；main 分支为 NeoForge 1.21.1（ModDevGradle）
+buildscript {
+    repositories {
+        maven { url = 'https://maven.minecraftforge.net' }
+        maven { url = 'https://maven.parchmentmc.org' }
+        maven { url = 'https://repo.spongepowered.org/repository/maven-public/' }
+        maven { url = 'https://maven.aliyun.com/repository/public/' }
+        mavenCentral()
+        gradlePluginPortal()
+    }
+    dependencies {
+        classpath group: 'net.minecraftforge.gradle', name: 'ForgeGradle', version: '[6.0.16,6.2)', changing: true
+        classpath 'org.parchmentmc:librarian:1.+'
+        classpath group: 'org.spongepowered', name: 'mixingradle', version: '0.7-SNAPSHOT'
+    }
 }
 
-// 需要 Java 21 版本
-java.toolchain.languageVersion = JavaLanguageVersion.of(21)
+apply plugin: 'net.minecraftforge.gradle'
+apply plugin: 'org.parchmentmc.librarian.forgegradle'
+apply plugin: 'org.spongepowered.mixin'
+apply plugin: 'java'
 
-version = mod_version
+// jar 文件名后缀区分双分支：forge-1.20.1 分支（main 分支为 NeoForge 1.21.1）
+version = "${mod_version}-forge-1.20.1"
 group = mod_group_id
+base { archivesName = 'tlm-mimo-tts' }
 
-base {
-    archivesName = 'tlm-mimo-tts'
+// 需要 Java 17 版本
+java.toolchain.languageVersion = JavaLanguageVersion.of(17)
+
+minecraft {
+    mappings channel: 'parchment', version: '2023.08.20-1.20.1'
+    runs {
+        configureEach {
+            property 'mixin.env.remapRefMap', 'true'
+            property 'mixin.env.refMapRemappingFile', "${projectDir}/build/createSrgToMcp/output.srg"
+            property 'forge.logging.markers', 'REGISTRIES'
+            mods { tlm_mimo_tts { source sourceSets.main } }
+        }
+        client {
+            workingDirectory project.file('run/client')
+            args '--username', 'xm2nd'
+        }
+        server {
+            workingDirectory project.file('run/server')
+            args '--nogui'
+        }
+    }
+}
+
+mixin {
+    add sourceSets.main, "tlm_mimo_tts.refmap.json"
+    config "tlm_mimo_tts.mixins.json"
 }
 
 repositories {
@@ -25,67 +64,25 @@ repositories {
     }
 }
 
-neoForge {
-    // NeoForge 版本信息
-    version = project.neo_version
-
-    // 反混淆表
-    parchment {
-        mappingsVersion = project.parchment_mappings_version
-        minecraftVersion = project.parchment_minecraft_version
-    }
-
-    runs {
-        client {
-            client()
-            gameDirectory = project.file('run/client')
-            programArguments = [
-                    "--username", "xm2nd"
-            ]
-            systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
-        }
-
-        server {
-            server()
-            gameDirectory = project.file('run/server')
-            programArgument '--nogui'
-            systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
-        }
-
-        configureEach {
-            jvmArguments = [
-                    '-XX:+IgnoreUnrecognizedVMOptions',
-                    '-XX:+AllowEnhancedClassRedefinition'
-            ]
-            systemProperty 'forge.logging.markers', 'REGISTRIES'
-            logLevel = org.slf4j.event.Level.DEBUG
-        }
-    }
-
-    mods {
-        "${mod_id}" {
-            sourceSet sourceSets.main
-        }
-    }
-}
-
 dependencies {
-    // TLM 1.5.3（1.21.1 NeoForge），仅开发环境使用。
-    // 发布 JAR 不打包 TLM，而是在 neoforge.mods.toml 中声明其为双端必需前置。
-    implementation "maven.modrinth:R0bDWFAW:tXG1TkGx"
+    minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
+    // 必须 fg.deobf：Modrinth 1.20.1 发布物是 SRG 名，不 deobf 编译不过。
+    // 发布 JAR 不打包 TLM，而是在 mods.toml 中声明其为双端必需前置。
+    implementation fg.deobf('maven.modrinth:touhou-little-maid:1.5.3-forge+mc1.20.1')
+    annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
 }
 
-// 自检（无第三方测试依赖）：给测试源码集补上 Minecraft/NeoForge 类
-def modDevExtension = extensions.getByType(net.neoforged.moddevgradle.dsl.ModDevExtension)
-modDevExtension.addModdingDependenciesTo(sourceSets.test)
+// selftest 自检源码集引用 MC/TLM 类（CompoundTag、TTSConfig 等），
+// 让 test 源码集继承 main 的完整类路径
+sourceSets.test.compileClasspath += sourceSets.main.compileClasspath
+sourceSets.test.runtimeClasspath += sourceSets.main.runtimeClasspath
 
-// 用于 neoforge.mods.toml 里替换那一堆 ${xxxx}
+// 用于 mods.toml 里替换那一堆 ${xxxx}
 tasks.withType(ProcessResources).configureEach {
     var replaceProperties = [
             minecraft_version      : minecraft_version,
             minecraft_version_range: minecraft_version_range,
-            neo_version            : neo_version,
-            neo_version_range      : neo_version_range,
+            forge_version          : forge_version,
             loader_version_range   : loader_version_range,
             mod_id                 : mod_id,
             mod_name               : mod_name,
@@ -96,7 +93,7 @@ tasks.withType(ProcessResources).configureEach {
     ]
     inputs.properties replaceProperties
 
-    filesMatching(['META-INF/neoforge.mods.toml']) {
+    filesMatching(['META-INF/mods.toml']) {
         expand replaceProperties
     }
 }
@@ -104,6 +101,11 @@ tasks.withType(ProcessResources).configureEach {
 // 必须，编码需要显式指定为 UTF
 tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8'
+}
+
+// 防 refmap 偶发丢失（TLM 同款）
+tasks.compileJava {
+    outputs.upToDateWhen { false }
 }
 
 // 自检：无第三方测试依赖，纯 JDK 标准库（由每个 SelfTest 类的 main 方法驱动）
@@ -114,6 +116,18 @@ tasks.register('selftest', JavaExec) {
     mainClass = 'com.xm2nd.tlmmimotts.selftest.RunAllSelfTests'
     systemProperty 'file.encoding', 'UTF-8'
     systemProperty 'stdout.encoding', 'UTF-8'
+}
+
+jar {
+    manifest {
+        attributes([
+                'Specification-Title'   : 'tlm-mimo-tts',
+                'Specification-Version' : mod_version,
+                'Implementation-Title'  : 'TLM MiMo TTS',
+                'Implementation-Version': mod_version,
+                'MixinConfigs'          : "${mod_id}.mixins.json"
+        ])
+    }
 }
 
 java {

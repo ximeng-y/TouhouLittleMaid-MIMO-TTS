@@ -7,41 +7,43 @@ import com.github.tartaricacid.touhoulittlemaid.util.GameModeUtil;
 import com.xm2nd.tlmmimotts.TlmMimoTts;
 import com.xm2nd.tlmmimotts.ai.service.tts.mimo.TTSMimoSite;
 import com.xm2nd.tlmmimotts.server.MimoCloneSampleRepository;
-import io.netty.buffer.ByteBuf;
-import net.minecraft.network.codec.ByteBufCodecs;
-import net.minecraft.network.codec.StreamCodec;
-import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
-import net.neoforged.neoforge.network.handling.IPayloadContext;
+import net.minecraftforge.network.NetworkEvent;
 import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
+import java.util.function.Supplier;
 
 /**
  * 客户端 → 服务端：请求某个 MiMo 站点的全部克隆音色描述。
  * 打开站点编辑页时发送；服务端复用 TLM 站点编辑权限校验后回发
  * {@link SyncMimoCloneDescriptionsPacket}。
  */
-public record RequestMimoCloneDescriptionsPacket(String siteId) implements CustomPacketPayload {
-    public static final CustomPacketPayload.Type<RequestMimoCloneDescriptionsPacket> TYPE =
-            new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(TlmMimoTts.MOD_ID, "request_mimo_clone_descriptions"));
-    public static final StreamCodec<ByteBuf, RequestMimoCloneDescriptionsPacket> STREAM_CODEC = StreamCodec.composite(
-            ByteBufCodecs.STRING_UTF8,
-            RequestMimoCloneDescriptionsPacket::siteId,
-            RequestMimoCloneDescriptionsPacket::new
-    );
+public class RequestMimoCloneDescriptionsPacket {
+    private final String siteId;
 
-    @Override
-    public CustomPacketPayload.Type<? extends CustomPacketPayload> type() {
-        return TYPE;
+    public RequestMimoCloneDescriptionsPacket(String siteId) {
+        this.siteId = siteId;
     }
 
-    public static void handle(RequestMimoCloneDescriptionsPacket message, IPayloadContext context) {
-        if (context.flow().isServerbound()) {
-            context.enqueueWork(() -> onHandle(message, (ServerPlayer) context.player()));
-        }
+    public String siteId() {
+        return siteId;
+    }
+
+    public static void encode(RequestMimoCloneDescriptionsPacket message, FriendlyByteBuf buf) {
+        buf.writeUtf(message.siteId());
+    }
+
+    public static RequestMimoCloneDescriptionsPacket decode(FriendlyByteBuf buf) {
+        return new RequestMimoCloneDescriptionsPacket(buf.readUtf());
+    }
+
+    public static void handle(RequestMimoCloneDescriptionsPacket message, Supplier<NetworkEvent.Context> contextSupplier) {
+        NetworkEvent.Context context = contextSupplier.get();
+        context.enqueueWork(() -> onHandle(message, context.getSender()));
+        context.setPacketHandled(true);
     }
 
     private static void onHandle(RequestMimoCloneDescriptionsPacket message, @Nullable ServerPlayer player) {
